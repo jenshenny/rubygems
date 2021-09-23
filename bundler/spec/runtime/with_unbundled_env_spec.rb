@@ -65,9 +65,9 @@ RSpec.describe "Bundler.with_env helpers" do
       # Simulate bundler has not yet been loaded
       ENV.replace(ENV.to_hash.delete_if {|k, _v| k.start_with?(Bundler::EnvironmentPreserver::BUNDLER_PREFIX) })
 
-      original = ruby('puts ENV.to_a.map {|e| e.join("=") }.sort.join("\n")')
+      original = ruby('puts ENV.to_a.map {|k, v| [k.upcase, v].join("=") }.sort.join("\n")')
       create_file("source.rb", <<-RUBY)
-        puts Bundler.original_env.to_a.map {|e| e.join("=") }.sort.join("\n")
+        puts Bundler.original_env.to_a.map {|k, v| [k.upcase, v].join("=") }.sort.join("\n")
       RUBY
       bundle_exec_ruby bundled_app("source.rb")
       expect(out).to eq original
