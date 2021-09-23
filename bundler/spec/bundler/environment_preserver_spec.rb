@@ -11,7 +11,7 @@ RSpec.describe Bundler::EnvironmentPreserver do
     let(:env) do
       ENV["foo"] = "my-foo"
       ENV["bar"] = "my-bar"
-      described_class.env_to_hash(ENV)
+      ENV.to_hash
     end
 
     it "should create backup entries" do
@@ -33,7 +33,7 @@ RSpec.describe Bundler::EnvironmentPreserver do
     context "when a key is empty" do
       let(:env) do
         ENV["foo"] = ""
-        described_class.env_to_hash(ENV)
+        ENV.to_hash
       end
 
       it "should not create backup entries" do
@@ -45,7 +45,7 @@ RSpec.describe Bundler::EnvironmentPreserver do
       let(:env) do
         ENV["foo"] = "my-foo"
         ENV["BUNDLER_ORIG_foo"] = "orig-foo"
-        described_class.env_to_hash(ENV)
+        ENV.to_hash
       end
 
       it "should keep the original value in the BUNDLER_ORIG_ variable" do
