@@ -43,6 +43,11 @@ class Gem::Commands::CertCommand < Gem::Command
       options[:key] = open_private_key(key_file)
     end
 
+    add_option('--key-algorithm ALGORITHM',
+               'Select which key algorithm to use for --build') do |algorithm, options|
+      options[:key_algorithm] = algorithm
+    end
+
     add_option('-s', '--sign CERT',
                'Signs CERT with the key from -K',
                'and the certificate from -C') do |cert_file, options|
@@ -170,8 +175,8 @@ class Gem::Commands::CertCommand < Gem::Command
     raise Gem::CommandLineError,
           "Passphrase and passphrase confirmation don't match" unless passphrase == passphrase_confirmation
 
-    key      = Gem::Security.create_key('ec')
-    byebug
+    algorithm = options[:key_algorithm] || 'RSA'
+    key      = Gem::Security.create_key(options[:key_algorithm])
     key_path = Gem::Security.write key, "gem-private_key.pem", 0600, passphrase
 
     return key, key_path

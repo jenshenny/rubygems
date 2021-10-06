@@ -152,6 +152,7 @@ require_relative 'openssl'
 #                                      certificate for EMAIL_ADDR
 #     -C, --certificate CERT           Signing certificate for --sign
 #     -K, --private-key KEY            Key for --sign or --build
+#     --key-algorithm ALGORITHM        Select which key algorithm to use for --build
 #     -s, --sign CERT                  Signs CERT with the key from -K
 #                                      and the certificate from -C
 #     -d, --days NUMBER_OF_DAYS        Days before the certificate expires
@@ -317,7 +318,6 @@ require_relative 'openssl'
 # * Honor extension restrictions
 # * Might be better to store the certificate chain as a PKCS#7 or PKCS#12
 #   file, instead of an array embedded in the metadata.
-# * Flexible signature and key algorithms, not hard-coded to RSA and SHA1.
 #
 # == Original author
 #
@@ -340,6 +340,11 @@ module Gem::Security
   # Length of keys created by KEY_ALGORITHM
 
   KEY_LENGTH = 3072
+
+  ##
+  # Key used for Elliptic Curve
+
+  EC_KEY = 'secp384r1'
 
   ##
   # Cipher used to encrypt the key pair used to sign gems.
@@ -392,7 +397,15 @@ module Gem::Security
                        serial = 1)
     cert = OpenSSL::X509::Certificate.new
 
-    cert.public_key = key.public_key
+    public_key = if key.is_a?(OpenSSL::PKey::EC)
+      ec_key = OpenSSL::PKey::EC.new(EC_KEY)
+      ec_key.public_key = key.public_key
+      ec_key
+    else
+      key.public_key
+    end
+
+    cert.public_key = public_key
     cert.version    = 2
     cert.serial     = serial
 
@@ -453,26 +466,22 @@ module Gem::Security
   ##
   # Creates a new key pair of the specified +length+ and +algorithm+.  The
   # default is a 3072 bit RSA key.
+  #
 
-  def self.create_key(algorithm = 'rsa')
-    case algorithm.downcase
-    when 'dsa'
-      if defined?(OpenSSL::PKey::DSA)
+  def self.create_key(algorithm)
+    if defined?(OpenSSL::PKey)
+      case algorithm.downcase
+      when 'dsa'
         OpenSSL::PKey::DSA.new(KEY_LENGTH)
-      end
-    when 'rsa'
-      if defined?(OpenSSL::PKey::RSA)
+      when 'rsa'
         OpenSSL::PKey::RSA.new(KEY_LENGTH)
+      when 'ec'
+        domain_key = OpenSSL::PKey::EC.new(EC_KEY)
+        domain_key.generate_key
+        domain_key
+      else
+        raise
       end
-    when 'ec'
-      if defined?(OpenSSL::PKey::EC)
-        example_key = OpenSSL::PKey::EC.new('secp256k1').generate_key
-        pkey = OpenSSL::PKey::EC.new(example_key.public_key.group)
-        pkey.public_key = example_key.public_key
-        pkey
-      end
-    else
-      raise
     end
   end
 
