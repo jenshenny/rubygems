@@ -337,14 +337,6 @@ module Gem::Security
   DIGEST_NAME = 'SHA256' # :nodoc:
 
   ##
-  # Algorithm for creating the key pair used to sign gems
-
-  KEY_ALGORITHM =
-    if defined?(OpenSSL::PKey::RSA)
-      OpenSSL::PKey::RSA
-    end
-
-  ##
   # Length of keys created by KEY_ALGORITHM
 
   KEY_LENGTH = 3072
@@ -462,8 +454,26 @@ module Gem::Security
   # Creates a new key pair of the specified +length+ and +algorithm+.  The
   # default is a 3072 bit RSA key.
 
-  def self.create_key(length = KEY_LENGTH, algorithm = KEY_ALGORITHM)
-    algorithm.new length
+  def self.create_key(algorithm = 'rsa')
+    case algorithm.downcase
+    when 'dsa'
+      if defined?(OpenSSL::PKey::DSA)
+        OpenSSL::PKey::DSA.new(KEY_LENGTH)
+      end
+    when 'rsa'
+      if defined?(OpenSSL::PKey::RSA)
+        OpenSSL::PKey::RSA.new(KEY_LENGTH)
+      end
+    when 'ec'
+      if defined?(OpenSSL::PKey::EC)
+        example_key = OpenSSL::PKey::EC.new('secp256k1').generate_key
+        pkey = OpenSSL::PKey::EC.new(example_key.public_key.group)
+        pkey.public_key = example_key.public_key
+        pkey
+      end
+    else
+      raise
+    end
   end
 
   ##

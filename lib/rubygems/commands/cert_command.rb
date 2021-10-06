@@ -89,14 +89,14 @@ class Gem::Commands::CertCommand < Gem::Command
   def open_private_key(key_file)
     check_openssl
     passphrase = ENV['GEM_PRIVATE_KEY_PASSPHRASE']
-    key = OpenSSL::PKey::RSA.new File.read(key_file), passphrase
+    key = OpenSSL::PKey.read File.read(key_file), passphrase
     raise OptionParser::InvalidArgument,
       "#{key_file}: private key not found" unless key.private?
     key
   rescue Errno::ENOENT
     raise OptionParser::InvalidArgument, "#{key_file}: does not exist"
-  rescue OpenSSL::PKey::RSAError
-    raise OptionParser::InvalidArgument, "#{key_file}: invalid RSA key"
+  rescue OpenSSL::PKey::PKeyError
+    raise OptionParser::InvalidArgument, "#{key_file}: invalid RSA/DSA/EC key"
   end
 
   def execute
@@ -170,7 +170,8 @@ class Gem::Commands::CertCommand < Gem::Command
     raise Gem::CommandLineError,
           "Passphrase and passphrase confirmation don't match" unless passphrase == passphrase_confirmation
 
-    key      = Gem::Security.create_key
+    key      = Gem::Security.create_key('ec')
+    byebug
     key_path = Gem::Security.write key, "gem-private_key.pem", 0600, passphrase
 
     return key, key_path
