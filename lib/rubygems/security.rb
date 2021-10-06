@@ -152,6 +152,7 @@ require_relative 'openssl'
 #                                      certificate for EMAIL_ADDR
 #     -C, --certificate CERT           Signing certificate for --sign
 #     -K, --private-key KEY            Key for --sign or --build
+#     --key-algorithm ALGORITHM        Select which key algorithm to use for --build
 #     -s, --sign CERT                  Signs CERT with the key from -K
 #                                      and the certificate from -C
 #     -d, --days NUMBER_OF_DAYS        Days before the certificate expires
@@ -317,7 +318,6 @@ require_relative 'openssl'
 # * Honor extension restrictions
 # * Might be better to store the certificate chain as a PKCS#7 or PKCS#12
 #   file, instead of an array embedded in the metadata.
-# * Flexible signature and key algorithms, not hard-coded to RSA and SHA1.
 #
 # == Original author
 #
@@ -337,17 +337,14 @@ module Gem::Security
   DIGEST_NAME = 'SHA256' # :nodoc:
 
   ##
-  # Algorithm for creating the key pair used to sign gems
-
-  KEY_ALGORITHM =
-    if defined?(OpenSSL::PKey::RSA)
-      OpenSSL::PKey::RSA
-    end
-
-  ##
   # Length of keys created by KEY_ALGORITHM
 
   KEY_LENGTH = 3072
+
+  ##
+  # Named curve used for Elliptic Curve
+
+  EC_NAME = 'secp384r1'
 
   ##
   # Cipher used to encrypt the key pair used to sign gems.
@@ -400,7 +397,7 @@ module Gem::Security
                        serial = 1)
     cert = OpenSSL::X509::Certificate.new
 
-    cert.public_key = key.public_key
+    cert.public_key = get_public_key(key)
     cert.version    = 2
     cert.serial     = serial
 
@@ -416,6 +413,17 @@ module Gem::Security
     end
 
     cert
+  end
+
+  ##
+  # Gets the right public key from a PKey instance
+
+  def self.get_public_key(key)
+    return key.public_key unless key.is_a?(OpenSSL::PKey::EC)
+
+    ec_key = OpenSSL::PKey::EC.new(EC_NAME)
+    ec_key.public_key = key.public_key
+    ec_key
   end
 
   ##
@@ -461,9 +469,23 @@ module Gem::Security
   ##
   # Creates a new key pair of the specified +length+ and +algorithm+.  The
   # default is a 3072 bit RSA key.
+  #
 
-  def self.create_key(length = KEY_LENGTH, algorithm = KEY_ALGORITHM)
-    algorithm.new length
+  def self.create_key(algorithm)
+    if defined?(OpenSSL::PKey)
+      case algorithm.downcase
+      when 'dsa'
+        OpenSSL::PKey::DSA.new(KEY_LENGTH)
+      when 'rsa'
+        OpenSSL::PKey::RSA.new(KEY_LENGTH)
+      when 'ec'
+        domain_key = OpenSSL::PKey::EC.new(EC_NAME)
+        domain_key.generate_key
+        domain_key
+      else
+        raise
+      end
+    end
   end
 
   ##
@@ -492,7 +514,7 @@ module Gem::Security
     raise Gem::Security::Exception,
           "incorrect signing key for re-signing " +
           "#{expired_certificate.subject}" unless
-      expired_certificate.public_key.to_pem == private_key.public_key.to_pem
+      expired_certificate.public_key.to_pem == get_public_key(private_key).to_pem
 
     unless expired_certificate.subject.to_s ==
            expired_certificate.issuer.to_s
