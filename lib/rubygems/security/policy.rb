@@ -115,9 +115,11 @@ class Gem::Security::Policy
       raise Gem::Security::Exception, 'missing key or signature'
     end
 
+    public_key = Gem::Security.get_public_key(key)
+
     raise Gem::Security::Exception,
       "certificate #{signer.subject} does not match the signing key" unless
-        signer.public_key.to_pem == key.public_key.to_pem
+        signer.public_key.to_pem == public_key.to_pem
 
     true
   end

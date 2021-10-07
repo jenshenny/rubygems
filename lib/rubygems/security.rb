@@ -397,15 +397,7 @@ module Gem::Security
                        serial = 1)
     cert = OpenSSL::X509::Certificate.new
 
-    public_key = if key.is_a?(OpenSSL::PKey::EC)
-      ec_key = OpenSSL::PKey::EC.new(EC_KEY)
-      ec_key.public_key = key.public_key
-      ec_key
-    else
-      key.public_key
-    end
-
-    cert.public_key = public_key
+    cert.public_key = get_public_key(key)
     cert.version    = 2
     cert.serial     = serial
 
@@ -421,6 +413,17 @@ module Gem::Security
     end
 
     cert
+  end
+
+  ##
+  # Gets the right public key from a PKey instance
+
+  def self.get_public_key(key)
+    return key.public_key unless key.is_a?(OpenSSL::PKey::EC)
+
+    ec_key = OpenSSL::PKey::EC.new(EC_KEY)
+    ec_key.public_key = key.public_key
+    ec_key
   end
 
   ##
