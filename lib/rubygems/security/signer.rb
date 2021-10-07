@@ -83,9 +83,7 @@ class Gem::Security::Signer
     @digest_name      = Gem::Security::DIGEST_NAME
     @digest_algorithm = Gem::Security.create_digest(@digest_name)
 
-    if @key && !@key.is_a?(OpenSSL::PKey::RSA)
-      @key = OpenSSL::PKey::RSA.new(File.read(@key), @passphrase)
-    end
+    @key = OpenSSL::PKey.read(File.read(@key), @passphrase) if @key
 
     if @cert_chain
       @cert_chain = @cert_chain.compact.map do |cert|
