@@ -165,7 +165,6 @@ class Gem::Security::Policy
       raise Gem::Security::Exception, message
     end
 
-    # TODO: check if this still works
     save_cert = OpenSSL::X509::Certificate.new File.read path
     save_dgst = digester.digest save_cert.public_key.to_s
 
