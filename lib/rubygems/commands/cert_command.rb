@@ -176,7 +176,7 @@ class Gem::Commands::CertCommand < Gem::Command
           "Passphrase and passphrase confirmation don't match" unless passphrase == passphrase_confirmation
 
     algorithm = options[:key_algorithm] || 'RSA'
-    key      = Gem::Security.create_key(options[:key_algorithm])
+    key      = Gem::Security.create_key(algorithm)
     key_path = Gem::Security.write key, "gem-private_key.pem", 0600, passphrase
 
     return key, key_path
