@@ -139,7 +139,7 @@ class Gem::Security::Signer
 
     raise Gem::Security::Exception, 'no certs provided' if @cert_chain.empty?
 
-    if @cert_chain.length == 1 and @cert_chain.last.not_after < Time.now
+    if true # @cert_chain.length == 1 and @cert_chain.last.not_after < Time.now
       alert("Your certificate has expired, trying to re-sign it...")
 
       re_sign_key(
@@ -169,17 +169,19 @@ class Gem::Security::Signer
   # expiry time (not after) is used for the timestamp.
 
   def re_sign_key(expiration_length: Gem::Security::ONE_YEAR) # :nodoc:
+    byebug
     old_cert = @cert_chain.last
 
     disk_cert_path = File.join(Gem.default_cert_path)
     disk_cert = File.read(disk_cert_path) rescue nil
 
     disk_key_path = File.join(Gem.default_key_path)
-    disk_key =
-      OpenSSL::PKey::RSA.new(File.read(disk_key_path), @passphrase) rescue nil
+    disk_key = OpenSSL::PKey.read(File.read(disk_key_path), @passphrase) rescue nil
 
+    byebug
     return unless disk_key
 
+    byebug
     if disk_key.to_pem == @key.to_pem && disk_cert == old_cert.to_pem
       expiry = old_cert.not_after.strftime('%Y%m%d%H%M%S')
       old_cert_file = "gem-public_cert.pem.expired.#{expiry}"

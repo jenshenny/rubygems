@@ -511,6 +511,7 @@ module Gem::Security
 
   def self.re_sign(expired_certificate, private_key, age = ONE_YEAR,
                    extensions = EXTENSIONS)
+    # TODO: fix public key for EC
     raise Gem::Security::Exception,
           "incorrect signing key for re-signing " +
           "#{expired_certificate.subject}" unless
