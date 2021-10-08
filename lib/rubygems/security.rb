@@ -402,7 +402,7 @@ module Gem::Security
     cert.serial     = serial
 
     cert.not_before = Time.now
-    cert.not_after  = Time.now
+    cert.not_after  = Time.now + age
 
     cert.subject    = subject
 
@@ -511,7 +511,6 @@ module Gem::Security
 
   def self.re_sign(expired_certificate, private_key, age = ONE_YEAR,
                    extensions = EXTENSIONS)
-    # TODO: fix public key for EC
     raise Gem::Security::Exception,
           "incorrect signing key for re-signing " +
           "#{expired_certificate.subject}" unless

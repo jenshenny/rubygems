@@ -261,13 +261,14 @@ For further reading on signing gems see `ri Gem::Security`.
     key_file = File.join Gem.default_key_path
     key = File.read key_file
     passphrase = ENV['GEM_PRIVATE_KEY_PASSPHRASE']
-    options[:key] = OpenSSL::PKey::RSA.new key, passphrase
+    options[:key] = OpenSSL::PKey.read key, passphrase
+
   rescue Errno::ENOENT
     alert_error \
       "--private-key not specified and ~/.gem/gem-private_key.pem does not exist"
 
     terminate_interaction 1
-  rescue OpenSSL::PKey::RSAError
+  rescue OpenSSL::PKey::PKeyError
     alert_error \
       "--private-key not specified and ~/.gem/gem-private_key.pem is not valid"
 
