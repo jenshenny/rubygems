@@ -402,7 +402,7 @@ module Gem::Security
     cert.serial     = serial
 
     cert.not_before = Time.now
-    cert.not_after  = Time.now + age
+    cert.not_after  = Time.now
 
     cert.subject    = subject
 
