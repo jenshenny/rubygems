@@ -515,7 +515,7 @@ module Gem::Security
     raise Gem::Security::Exception,
           "incorrect signing key for re-signing " +
           "#{expired_certificate.subject}" unless
-      expired_certificate.public_key.to_pem == private_key.public_key.to_pem
+      expired_certificate.public_key.to_pem == get_public_key(private_key).to_pem
 
     unless expired_certificate.subject.to_s ==
            expired_certificate.issuer.to_s
