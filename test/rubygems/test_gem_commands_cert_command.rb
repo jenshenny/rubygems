@@ -142,6 +142,42 @@ Added '/CN=alternate/DC=example'
     assert_path_exist File.join(@tempdir, 'gem-public_cert.pem')
   end
 
+  def test_execute_build_key_algorithm
+    passphrase = 'Foo bar'
+
+    @cmd.handle_options %W[--build nobody@example.com --key_algorithm ec]
+
+    @build_ui = Gem::MockGemUi.new "#{passphrase}\n#{passphrase}"
+
+    use_ui @build_ui do
+      @cmd.execute
+    end
+
+    output = @build_ui.output.squeeze("\n").split "\n"
+
+    assert_equal "Passphrase for your Private Key:  ",
+                 output.shift
+    assert_equal "Please repeat the passphrase for your Private Key:  ",
+                 output.shift
+    assert_equal "Certificate: #{File.join @tempdir, 'gem-public_cert.pem'}",
+                 output.shift
+    assert_equal "Private Key: #{File.join @tempdir, 'gem-private_key.pem'}",
+                 output.shift
+
+    assert_equal "Don't forget to move the key file to somewhere private!",
+                 output.shift
+
+    assert_empty output
+    assert_empty @build_ui.error
+
+    assert_path_exist File.join(@tempdir, 'gem-private_key.pem')
+
+    cert_path = File.join(@tempdir, 'gem-public_cert.pem')
+    assert_path_exist cert_path
+    cert = OpenSSL::X509::Certificate.new(File.read(cert_path))
+    assert cert.public_key.is_a? OpenSSL::PKey::EC
+  end
+
   def test_execute_build_bad_email_address
     passphrase = 'Foo bar'
     email = "nobody@"
@@ -277,6 +313,29 @@ Added '/CN=alternate/DC=example'
     assert_empty @ui.error
 
     assert_path_exist File.join(@tempdir, 'gem-public_cert.pem')
+  end
+
+  #WIP
+  def test_execute_build_ec_key
+    @cmd.handle_options %W[
+      --build nobody@example.com
+      --private-key #{PRIVATE_KEY_FILE}
+    ]
+
+    use_ui @ui do
+      @cmd.execute
+    end
+
+    output = @ui.output.split "\n"
+
+    assert_equal "Certificate: #{File.join @tempdir, 'gem-public_cert.pem'}",
+                 output.shift
+
+    assert_empty output
+    assert_empty @ui.error
+
+    assert_path_exist File.join(@tempdir, 'gem-public_cert.pem')
+    assert_path_not_exist File.join(@tempdir, 'gem-private_key.pem')
   end
 
   def test_execute_certificate
