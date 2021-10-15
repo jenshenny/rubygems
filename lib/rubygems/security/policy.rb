@@ -166,9 +166,9 @@ class Gem::Security::Policy
     end
 
     save_cert = OpenSSL::X509::Certificate.new File.read path
-    save_dgst = digester.digest save_cert.public_key.to_s
+    save_dgst = digester.digest save_cert.public_key.to_pem
 
-    pkey_str = root.public_key.to_s
+    pkey_str = root.public_key.to_pem
     cert_dgst = digester.digest pkey_str
 
     raise Gem::Security::Exception,

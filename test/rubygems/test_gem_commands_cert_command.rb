@@ -742,7 +742,7 @@ ERROR:  --private-key not specified and ~/.gem/gem-private_key.pem does not exis
       @cmd.handle_options %W[--private-key #{bad}]
     end
 
-    assert_equal "invalid argument: --private-key #{bad}: invalid RSA key",
+    assert_equal "invalid argument: --private-key #{bad}: invalid RSA/DSA/EC key",
                  e.message
 
     e = assert_raise OptionParser::InvalidArgument do
