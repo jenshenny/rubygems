@@ -16,6 +16,7 @@ class TestGemCommandsCertCommand < Gem::TestCase
 
   ALTERNATE_KEY_FILE = key_path 'alternate'
   PRIVATE_KEY_FILE   = key_path 'private'
+  PRIVATE_EC_KEY_FILE   = key_path 'private_ec'
   PUBLIC_KEY_FILE    = key_path 'public'
 
   ALTERNATE_CERT_FILE      = cert_path 'alternate'
@@ -142,7 +143,7 @@ Added '/CN=alternate/DC=example'
     assert_path_exist File.join(@tempdir, 'gem-public_cert.pem')
   end
 
-  def test_execute_build_key_algorithm
+  def test_execute_build_key_algorithm_ec_key
     passphrase = 'Foo bar'
 
     @cmd.handle_options %W[--build nobody@example.com --key_algorithm ec]
@@ -315,11 +316,10 @@ Added '/CN=alternate/DC=example'
     assert_path_exist File.join(@tempdir, 'gem-public_cert.pem')
   end
 
-  #WIP
   def test_execute_build_ec_key
     @cmd.handle_options %W[
       --build nobody@example.com
-      --private-key #{PRIVATE_KEY_FILE}
+      --private-key #{PRIVATE_EC_KEY_FILE}
     ]
 
     use_ui @ui do

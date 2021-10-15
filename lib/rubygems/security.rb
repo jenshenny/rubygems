@@ -483,7 +483,8 @@ module Gem::Security
         domain_key.generate_key
         domain_key
       else
-        raise
+        raise Gem::Security::Exception,
+        "#{algorithm} algorithm not found. RSA/DSA/EC algorithms are supported."
       end
     end
   end

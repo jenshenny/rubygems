@@ -12,6 +12,7 @@ end
 
 class TestGemSecurity < Gem::TestCase
   CHILD_KEY = load_key 'child'
+  EC_KEY = load_key 'private_ec', 'Foo bar'
 
   ALTERNATE_CERT = load_cert 'child'
   CHILD_CERT     = load_cert 'child'
@@ -106,6 +107,33 @@ class TestGemSecurity < Gem::TestCase
     key = @SEC.create_key 'rsa'
 
     assert_kind_of OpenSSL::PKey::RSA, key
+  end
+
+  def test_class_create_key_downcases
+    key = @SEC.create_key 'DSA'
+
+    assert_kind_of OpenSSL::PKey::DSA, key
+  end
+
+  def test_class_create_key_raises_unknown_algorithm
+    e = assert_raise Gem::Security::Exception do
+      @SEC.create_key 'NOT_RSA'
+    end
+
+    assert_equal "NOT_RSA algorithm not found. RSA/DSA/EC algorithms are supported.",
+                 e.message
+  end
+
+  def test_class_get_public_key_rsa
+    pkey_pem = PRIVATE_KEY.public_key.to_pem
+
+    assert_equal pkey_pem, @SEC.get_public_key(PRIVATE_KEY).to_pem
+  end
+
+  def test_class_get_public_key_ec
+    pkey = @SEC.get_public_key(EC_KEY)
+
+    assert_respond_to pkey, :to_pem
   end
 
   def test_class_email_to_name
