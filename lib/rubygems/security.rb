@@ -435,7 +435,7 @@ module Gem::Security
   # Checks if the provided key is private.
   # In Ruby 2.3 EC doesn't implments the private_key? but not the private? method
 
-  if defined?(OpenSSL::PKey::EC) && Gem::Version.new(Gem::VERSION) < Gem::Version.new("2.4.0")
+  if defined?(OpenSSL::PKey::EC) && Gem::Version.new(String.new(RUBY_VERSION)) < Gem::Version.new("2.4.0")
     OpenSSL::PKey::EC.send(:alias_method, :private?, :private_key?)
   end
 
