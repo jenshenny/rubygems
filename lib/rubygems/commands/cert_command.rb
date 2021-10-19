@@ -98,12 +98,9 @@ class Gem::Commands::CertCommand < Gem::Command
     raise OptionParser::InvalidArgument,
       "#{key_file}: private key not found" unless Gem::Security.private_key?(key)
     key
-  rescue ArgumentError
-    raise OptionParser::InvalidArgument,
-      "#{key_file}: private key not found"
   rescue Errno::ENOENT
     raise OptionParser::InvalidArgument, "#{key_file}: does not exist"
-  rescue OpenSSL::PKey::PKeyError
+  rescue OpenSSL::PKey::PKeyError, ArgumentError
     raise OptionParser::InvalidArgument, "#{key_file}: invalid RSA, DSA, or EC key"
   end
 
