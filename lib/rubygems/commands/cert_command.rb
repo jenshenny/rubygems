@@ -96,7 +96,7 @@ class Gem::Commands::CertCommand < Gem::Command
     passphrase = ENV['GEM_PRIVATE_KEY_PASSPHRASE']
     key = OpenSSL::PKey.read File.read(key_file), passphrase
     raise OptionParser::InvalidArgument,
-      "#{key_file}: private key not found" unless Gem::Security.private_key?(key)
+      "#{key_file}: private key not found" unless key.private?
     key
   rescue Errno::ENOENT
     raise OptionParser::InvalidArgument, "#{key_file}: does not exist"
