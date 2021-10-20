@@ -77,7 +77,6 @@ module Bundler
 
         active_spec = retrieve_active_spec(definition, current_spec)
         next unless active_spec
-
         next unless filter_options_patch.empty? || update_present_via_semver_portions(current_spec, active_spec, options)
 
         gem_outdated = Gem::Version.new(active_spec.version) > Gem::Version.new(current_spec.version)
@@ -95,6 +94,14 @@ module Bundler
           :dependency => dependency,
           :groups => groups,
         }
+      end
+
+      outdated_bundler = unless options[:parseable]
+        lockfile_version = Gem::Version.new(definition.locked_gems.bundler_version)
+        latest_version = options[:local] ? Bundler::VERSION : Gem.latest_spec_for('bundler').version.to_s
+        outdated_bundler = if Gem::Version.new(lockfile_version) < Gem::Version.new(latest_version)
+          { current: lockfile_version, latest: latest_version }
+        end
       end
 
       if outdated_gems.empty?
@@ -121,6 +128,10 @@ module Bundler
           print_gems(outdated_gems)
         else
           print_gems_table(outdated_gems)
+        end
+
+        if outdated_bundler
+          Bundler.ui.info "\n#{outdated_spec_info("bundler", outdated_bundler[:latest], outdated_bundler[:current])}"
         end
 
         exit 1
@@ -191,8 +202,12 @@ module Bundler
         dependency_version = %(, requested #{dependency.requirement})
       end
 
-      spec_outdated_info = "#{active_spec.name} (newest #{spec_version}, " \
-        "installed #{current_version}#{dependency_version})"
+      spec_outdated_info = outdated_spec_info(
+        active_spec.name,
+        spec_version,
+        current_version,
+        dependency_version
+      )
 
       output_message = if options[:parseable]
         spec_outdated_info.to_s
@@ -203,6 +218,10 @@ module Bundler
       end
 
       Bundler.ui.info output_message.rstrip
+    end
+
+    def outdated_spec_info(name, spec_version, current_version, dependency_version = nil)
+      "#{name} (newest #{spec_version}, installed #{current_version}#{dependency_version})"
     end
 
     def gem_column_for(current_spec, active_spec, dependency, groups)
